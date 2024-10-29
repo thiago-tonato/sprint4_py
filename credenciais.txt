@@ -1,0 +1,5 @@
+user=rm99404
+password=220205
+host=oracle.fiap.com.br
+port=1521
+sid=ORCL

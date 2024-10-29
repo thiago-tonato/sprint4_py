@@ -1,38 +1,81 @@
-from flask import Flask, request, jsonify
 import requests
+import json
 
-app = Flask(__name__)
+def menu_principal():
+    while True:
+        print("\n--- Menu Principal ---")
+        print("1. Inserir Usuário")
+        print("2. Consultar Usuário")
+        print("3. Alterar Usuário")
+        print("4. Excluir Usuário")
+        print("5. Sair")
 
-API_KEY = '6e3346034fe8483bd104df262b4f1cc95214bd4b'
+        opcao = input("Escolha uma opção: ")
 
-# Função que verifica e-mail usando API Externa do Hunter.IO
-def verificar_email(email):
-    url = f"https://api.hunter.io/v2/email-verifier?email={email}&api_key={API_KEY}"
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        data = response.json()
-        if data['data']['result'] == 'deliverable':
-            return {"email": email, "status": "válido"}
+        if opcao == "1":
+            inserir_usuario()
+        elif opcao == "2":
+            consultar_usuario()
+        elif opcao == "3":
+            alterar_usuario()
+        elif opcao == "4":
+            excluir_usuario()
+        elif opcao == "5":
+            print("Saindo do programa...")
+            break
         else:
-            return {"email": email, "status": "inválido"}
+            print("Opção inválida! Tente novamente.")
+
+def inserir_usuario():
+    print("\n--- Inserir Usuário ---")
+    login = input("Digite o login: ")
+    email = input("Digite o email: ")
+    senha = input("Digite a senha: ")
+
+    dados = {"login": login, "email": email, "senha": senha}
+
+    resposta = requests.post("http://localhost:5000/api/usuarios", json=dados)
+    print(resposta.json().get("mensagem", resposta.json().get("erro")))
+
+def consultar_usuario():
+    print("\n--- Consultar Usuário ---")
+    login = input("Digite o login do usuário: ")
+
+    resposta = requests.get(f"http://localhost:5000/api/usuarios/{login}")
+    if resposta.status_code == 200:
+        dados = resposta.json()
+        print(f"Login: {dados['login']}\nEmail: {dados['email']}")
+
+        # Exportando dados para um arquivo JSON
+        nome_arquivo = f"usuario_{login}.json"
+        with open(nome_arquivo, "w") as file:
+            json.dump(dados, file, indent=4)
+        
+        print(f"Dados exportados para o arquivo {nome_arquivo}")
     else:
-        return {"erro": "Erro ao verificar o email", "status_code": response.status_code}
+        print(resposta.json().get("erro"))
 
-# Endpoint para verificar o email via POST
-@app.route('/api/verificar-email', methods=['POST'])
-def verificar_email_api():
-    # Extraindo o email do corpo da requisição POST
-    dados = request.get_json()
-    email = dados.get('email')
+def alterar_usuario():
+    print("\n--- Alterar Usuário ---")
+    login = input("Digite o login do usuário: ")
+    email = input("Digite o novo email (deixe vazio para não alterar): ")
+    senha = input("Digite a nova senha (deixe vazio para não alterar): ")
 
-    if not email:
-        return jsonify({"erro": "Nenhum email fornecido"}), 400
+    dados = {}
+    if email:
+        dados["email"] = email
+    if senha:
+        dados["senha"] = senha
 
-    # Verificando o email
-    resultado = verificar_email(email)
-    return jsonify(resultado)
+    resposta = requests.put(f"http://localhost:5000/api/usuarios/{login}", json=dados)
+    print(resposta.json().get("mensagem", resposta.json().get("erro")))
 
-# Executar o servidor Flask
-if __name__ == '__main__':
-    app.run(debug=True)
+def excluir_usuario():
+    print("\n--- Excluir Usuário ---")
+    login = input("Digite o login do usuário: ")
+
+    resposta = requests.delete(f"http://localhost:5000/api/usuarios/{login}")
+    print(resposta.json().get("mensagem", resposta.json().get("erro")))
+
+if __name__ == "__main__":
+    menu_principal()
