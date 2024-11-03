@@ -66,7 +66,7 @@ def cadastrar_usuario():
         senha_hash = generate_password_hash(senha)
 
         cursor.execute(
-            "INSERT INTO usuarios (login, email, senha) VALUES (:1, :2, :3)",
+            "INSERT INTO usuarios_1 (login, email, senha) VALUES (:1, :2, :3)",
             (login, email, senha_hash),
         )
         conn.commit()
