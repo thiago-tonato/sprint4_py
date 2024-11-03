@@ -42,18 +42,26 @@ def consultar_usuario():
     login = input("Digite o login do usuário: ")
 
     resposta = requests.get(f"http://localhost:5000/api/usuarios/{login}")
+    
     if resposta.status_code == 200:
-        dados = resposta.json()
-        print(f"Login: {dados['login']}\nEmail: {dados['email']}")
+        try:
+            dados = resposta.json()
+            print(f"Login: {dados['login']}\nEmail: {dados['email']}")
 
-        # Exportando dados para um arquivo JSON
-        nome_arquivo = f"usuario_{login}.json"
-        with open(nome_arquivo, "w") as file:
-            json.dump(dados, file, indent=4)
-        
-        print(f"Dados exportados para o arquivo {nome_arquivo}")
+            nome_arquivo = f"usuario_{login}.json"
+            with open(nome_arquivo, "w") as file:
+                json.dump(dados, file, indent=4)
+            
+            print(f"Dados exportados para o arquivo {nome_arquivo}")
+        except ValueError:
+            print("Erro: resposta não contém um JSON válido.")
     else:
-        print(resposta.json().get("erro"))
+        try:
+            erro = resposta.json().get("erro", "Erro desconhecido")
+            print(erro)
+        except ValueError:
+            print("Erro ao consultar usuário: resposta não contém JSON.")
+
 
 def alterar_usuario():
     print("\n--- Alterar Usuário ---")
@@ -68,14 +76,30 @@ def alterar_usuario():
         dados["senha"] = senha
 
     resposta = requests.put(f"http://localhost:5000/api/usuarios/{login}", json=dados)
-    print(resposta.json().get("mensagem", resposta.json().get("erro")))
+    
+    if resposta.status_code == 200:
+        print(resposta.json().get("mensagem", "Alteração realizada com sucesso."))
+    else:
+        try:
+            erro = resposta.json().get("erro", "Erro desconhecido")
+            print(erro)
+        except ValueError:
+            print("Erro ao alterar usuário: resposta não contém JSON.")
 
 def excluir_usuario():
     print("\n--- Excluir Usuário ---")
     login = input("Digite o login do usuário: ")
 
     resposta = requests.delete(f"http://localhost:5000/api/usuarios/{login}")
-    print(resposta.json().get("mensagem", resposta.json().get("erro")))
+    
+    if resposta.status_code == 200:
+        print(resposta.json().get("mensagem", "Usuário excluído com sucesso."))
+    else:
+        try:
+            erro = resposta.json().get("erro", "Erro desconhecido")
+            print(erro)
+        except ValueError:
+            print("Erro ao excluir usuário: resposta não contém JSON.")
 
 if __name__ == "__main__":
     menu_principal()
