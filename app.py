@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
 import requests
 import oracledb 
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 API_KEY = "6e3346034fe8483bd104df262b4f1cc95214bd4b"
 
@@ -151,6 +153,38 @@ def excluir_usuario(login):
     except Exception as e:
         print(f"Erro ao excluir usuário: {e}")
         return jsonify({"erro": f"Erro ao excluir usuário: {str(e)}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route("/api/usuarios/login", methods=["POST"])
+def login_usuario():
+    dados = request.get_json()
+    login = dados.get("login")
+    senha = dados.get("senha")
+    
+    if not login or not senha:
+        return jsonify({"erro": "Campos 'login' e 'senha' são obrigatórios"}), 400
+
+    conn = None
+    try:
+        conn = conectar_oracle()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT senha FROM usuarios_1 WHERE login = :login", {"login": login})
+        resultado = cursor.fetchone()
+        
+        if resultado:
+            senha_hash = resultado[0]
+            if check_password_hash(senha_hash, senha):
+                return jsonify({"mensagem": "Login realizado com sucesso."}), 200
+            else:
+                return jsonify({"erro": "Senha incorreta"}), 401
+        else:
+            return jsonify({"erro": "Usuário não encontrado"}), 404
+    except Exception as e:
+        print(f"Erro ao realizar login: {e}")
+        return jsonify({"erro": f"Erro ao realizar login: {str(e)}"}), 500
     finally:
         if conn:
             conn.close()
