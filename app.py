@@ -176,6 +176,9 @@ def login_usuario():
         
         if resultado:
             senha_hash = resultado[0]
+            print(f"Senha armazenada (hash): {senha_hash}")
+            print(f"Senha fornecida: {senha}")
+
             if check_password_hash(senha_hash, senha):
                 return jsonify({"mensagem": "Login realizado com sucesso."}), 200
             else:
